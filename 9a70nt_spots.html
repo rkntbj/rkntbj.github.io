@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>9A70NT Recent Spots</title>
+<style>
+  body { font-family: Arial, sans-serif; font-size: 14px; margin: 5px; background: #f9f9f9; }
+  h3 { margin-top: 0; }
+  .group { margin-bottom: 12px; }
+  .group-header { font-weight: bold; background: #eee; padding: 2px 6px; }
+  table { width: 100%; border-collapse: collapse; margin-top: 2px; }
+  th, td { border: 1px solid #ccc; padding: 4px 6px; text-align: left; font-size: 13px; }
+  tr:nth-child(even) { background: #fafafa; }
+</style>
+</head>
+<body>
+<h3>9A70NT — Recent Spots (Cluster + RBN)</h3>
+<div id="spotContainer">Loading spots...</div>
+
+<script>
+const CALLSIGN = "9A70NT";
+const MAX_SPOTS = 50;
+const REFRESH_INTERVAL = 30000;
+
+async function fetchSpots() {
+  const container = document.getElementById("spotContainer");
+  container.innerHTML = "Loading spots...";
+  try {
+    const url = `https://api.spothole.app/spots?call=${CALLSIGN}&limit=${MAX_SPOTS}`;
+    const resp = await fetch(url);
+    const data = await resp.json();
+
+    if (!data || data.length === 0) {
+      container.innerHTML = "<p>No spots found.</p>";
+      return;
+    }
+
+    // Group by band and mode
+    const grouped = {};
+    data.forEach(spot => {
+      const band = spot.band || "Unknown";
+      const mode = spot.mode || "Unknown";
+      const key = band + "_" + mode;
+      if (!grouped[key]) grouped[key] = [];
+      grouped[key].push(spot);
+    });
+
+    // Build HTML
+    let html = "";
+    Object.keys(grouped).sort().forEach(key => {
+      const [band, mode] = key.split("_");
+      html += `<div class="group"><div class="group-header">${band} — ${mode}</div>`;
+      html += "<table><thead><tr><th>Freq</th><th>DX Call</th><th>Time UTC</th><th>Source</th></tr></thead><tbody>";
+      grouped[key].forEach(spot => {
+        html += `<tr>
+          <td>${spot.freq}</td>
+          <td>${spot.dxcall}</td>
+          <td>${spot.time}</td>
+          <td>${spot.source}</td>
+        </tr>`;
+      });
+      html += "</tbody></table></div>";
+    });
+
+    container.innerHTML = html;
+
+  } catch (err) {
+    console.error(err);
+    container.innerHTML = "<p>Error loading spots.</p>";
+  }
+}
+
+// Initial fetch
+fetchSpots();
+// Auto-refresh
+setInterval(fetchSpots, REFRESH_INTERVAL);
+</script>
+</body>
+</html>
