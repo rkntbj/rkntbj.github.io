@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html><body>
 <h1>Currently on air on:</h1>
 <table>
